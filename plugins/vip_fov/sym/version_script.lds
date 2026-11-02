@@ -10,7 +10,9 @@
         __vip_*;
 
         /* hudmenu binding slots (defined by hudmenu_bindings, filled by the plugify module from
-           the hudmenu plugin's exported GetClientMenuType/SetClientMenuType) */
+           the hudmenu plugin's exported GetClientMenuType/SetClientMenuType). Optional dependency:
+           without hudmenu the globals stay null and the menu type falls back to pisexcompat's
+           HUD_LAYOUT mapping ("hud" when registered, otherwise "button"). */
         __hudmenu_*;
 
         /* No exported methods: vip_fov exposes nothing to other plugins. */

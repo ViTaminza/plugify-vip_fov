@@ -2,7 +2,7 @@
 	"$schema": "https://raw.githubusercontent.com/untrustedmodders/plugify/refs/heads/main/schemas/plugin.schema.json",
 	"version": "${VIP_FOV_VERSION}",
 	"name": "vip_fov",
-	"description": "[VIP] FOV: the selectable 'FOV' feature opens a menu of the group's comma-separated FOV values; the choice is stored in the 'FOV_Value' cookie and applied to m_iDesiredFOV on spawn. Ported from the Pisex VIP core module VIP_FOV (vip_fov). Requires the vip core.",
+	"description": "[VIP] FOV: the selectable 'FOV' feature opens a menu of the group's comma-separated FOV values; the choice is stored in the 'FOV_Value' cookie and applied to m_iDesiredFOV on spawn. Ported from the Pisex VIP core module VIP_FOV (vip_fov) to pure s2sdk (no pisexcompat); the menu type follows the player's own '!menu' choice through the optional hudmenu plugin. Requires the vip core.",
 	"author": "Pisex, ported to Plugify",
 	"website": "https://github.com/untrustedmodders/plugify",
 	"license": "GPL-3.0",
@@ -23,5 +23,6 @@
 			"constraints": ">=1.0.0",
 			"optional": true
 		}
-	]
+	],
+	"methods": []
 }

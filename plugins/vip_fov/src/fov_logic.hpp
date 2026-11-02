@@ -1,7 +1,8 @@
-// vip_fov — engine-free part of the FOV module: the "FOV" list parsing and the menu/item
-// dispatch of the original (vip_fov.cpp).
+// vip_fov — engine-free part of the FOV module: the "FOV" list parsing, the guarded std::stoi,
+// the menu item dispatch of the original (vip_fov.cpp) and the two decisions the native menu
+// controller needs (the Pisex page-to-button mapping and the s2sdk menu type choice).
 //
-// Kept pure so both are unit-testable (tests/vip_fov_tests.cpp).
+// Kept pure so all of it is unit-testable (tests/vip_fov_tests.cpp).
 
 #pragma once
 
@@ -10,16 +11,9 @@
 #include <string_view>
 #include <vector>
 
+#include "common.hpp"
+
 namespace vip_fov {
-
-constexpr int kMaxSlots = 64;
-
-// The cookie the chosen FOV is stored in (the original's VIP_SetClientCookie name).
-inline constexpr const char* kCookieName = "FOV_Value";
-// The original defaulted to 90 when the cookie was empty.
-inline constexpr int kDefaultFov = 90;
-// The item number of the exit-back button in the Pisex menu numbering (pisexcompat's trampoline).
-inline constexpr int kExitBackItem = 7;
 
 // OnClientLoaded of the original parses the "FOV" group value with std::getline over commas
 // (std::istringstream semantics):
@@ -66,7 +60,7 @@ enum class SelectAction {
 	OpenVipMenu,
 };
 
-inline SelectAction ActionForItem(int iItem) {
+constexpr SelectAction ActionForItem(int iItem) {
 	if (iItem < kExitBackItem) {
 		return SelectAction::SetFov;
 	}
@@ -74,6 +68,41 @@ inline SelectAction ActionForItem(int iItem) {
 		return SelectAction::OpenVipMenu;
 	}
 	return SelectAction::Ignore;
+}
+
+// The Pisex button number of a selected s2sdk item: pisexcompat translated s2sdk's global item
+// index into the 1..5 number of the visible page, because s2sdk also accepts digits 6/7 and maps
+// them to currentOffset + 5/6 - items of the next page that were never displayed. The original
+// callback only ever saw 1..5, 7 and 9. Returns 0 for a selection outside the visible page.
+// `pageOffset` is s2sdk::GetClientMenuOffset(slot); when the binding is unavailable the caller
+// passes the page-aligned fallback `itemIndex - itemIndex % kItemsPerPage` (pisexcompat's).
+constexpr int VisibleMenuButton(int iItemIndex, int iPageOffset) {
+	if (iItemIndex < 0) {
+		return 0;
+	}
+	const int iButton = iItemIndex - iPageOffset + 1;
+	return (iButton >= 1 && iButton <= kItemsPerPage) ? iButton : 0;
+}
+
+// The s2sdk menu type a displayed menu gets, the pure part of pisexcompat's
+// ResolveS2sdkMenuTypeName(): vip_fov never forces a type, so the player's own "!menu" choice
+// (hudmenu's GetClientMenuType) wins when it is one of the known names; "hud"/"wasd" are only
+// accepted while the matching backend is registered. Without a usable choice the Pisex default
+// MenuType::HUD_LAYOUT is mapped exactly as pisexcompat mapped it: "hud" when the Panorama backend
+// is registered, s2sdk's built-in "button" (the closest on-screen, dead-player-usable type)
+// otherwise.
+inline std::string PickMenuTypeName(std::string_view playerChoice, bool hudTypeRegistered,
+									bool wasdTypeRegistered) {
+	if (playerChoice == "chat" || playerChoice == "centerhtml" || playerChoice == "button") {
+		return std::string(playerChoice);
+	}
+	if (playerChoice == "hud") {
+		return hudTypeRegistered ? "hud" : "button";
+	}
+	if (playerChoice == "wasd") {
+		return wasdTypeRegistered ? "wasd" : "button";
+	}
+	return hudTypeRegistered ? "hud" : "button";
 }
 
 } // namespace vip_fov
